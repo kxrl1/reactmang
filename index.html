@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Spotify</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header>
+      <h1>Mini Spotify</h1>
+    </header>
+
+    <!-- Playlist / Song List -->
+    <main>
+      <h2>Laulude nimekiri</h2>
+      <ul class="song-list">
+        <li class="song active">
+          <span class="song-title">Blinding Lights</span>
+          <span class="song-artist">The Weeknd</span>
+        </li>
+        <li class="song">
+          <span class="song-title">Levitating</span>
+          <span class="song-artist">Dua Lipa</span>
+        </li>
+        <li class="song">
+          <span class="song-title">Shape of You</span>
+          <span class="song-artist">Ed Sheeran</span>
+        </li>
+      </ul>
+    </main>
+
+    <!-- Player Controls -->
+    <footer>
+      <div class="player">
+        <span id="current-song">Praegune laul: Blinding Lights - The Weeknd</span>
+        <div class="controls">
+          <button id="prev">prev</button>
+          <button id="play">play</button>
+          <button id="next">next</button>
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
