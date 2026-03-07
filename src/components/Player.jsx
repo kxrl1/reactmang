@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react"
-
-// Player — alumine riba
-// audioRef on päris HTML5 Audio objekt App.jsx-ist
+import { useState, useEffect, useRef } from "react"
 
 function Player({ laul, maabib, togglePlay, jargmine, eelmine, toggleLiked, audioRef }) {
   const [progress, setProgress] = useState(0)
   const [currentTime, setCurrentTime] = useState("0:00")
   const [kestus, setKestus] = useState("0:00")
   const [volume, setVolume] = useState(80)
+  const [popup, setPopup] = useState(false)
+  const timerRef = useRef(null)
+  const eelmineId = useRef(undefined) // undefined = pole veel ühtegi laulu näidatud
 
-  // useEffect — uuenda progress bari reaalajas
+  // useEffect — audio progress
   useEffect(() => {
     const audio = audioRef.current
 
@@ -28,18 +28,34 @@ function Player({ laul, maabib, togglePlay, jargmine, eelmine, toggleLiked, audi
       setKestus(`${m}:${s}`)
     }
 
-    // Laadi lahesturid
     audio.addEventListener("timeupdate", handleTimeUpdate)
     audio.addEventListener("loadedmetadata", handleLoadedMetadata)
-
-    // Cleanup — eemalda lahesturid kui komponent eemaldatakse
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate)
       audio.removeEventListener("loadedmetadata", handleLoadedMetadata)
     }
   }, [])
 
-  // Klikk progress baril — hüppa sellesse kohta laulus
+  // useEffect — laul vahetus, näita popup-i
+  // Töötab KA esimesel laulul sest eelmineId algab undefined-ina
+  useEffect(() => {
+    if (!laul) return
+    if (eelmineId.current !== laul.id) {
+      eelmineId.current = laul.id
+
+      // Tühista eelmine timer kui on
+      clearTimeout(timerRef.current)
+
+      // Näita popup-i
+      setPopup(true)
+
+      // Peida 3 sekundi pärast
+      timerRef.current = setTimeout(() => setPopup(false), 3000)
+    }
+
+    return () => clearTimeout(timerRef.current)
+  }, [laul])
+
   function handleProgressClick(e) {
     const rect = e.currentTarget.getBoundingClientRect()
     const protsent = (e.clientX - rect.left) / rect.width
@@ -60,7 +76,7 @@ function Player({ laul, maabib, togglePlay, jargmine, eelmine, toggleLiked, audi
   return (
     <footer className="player">
 
-      {/* Vasak — laulu info */}
+      {/* Vasak */}
       <div className="player-left">
         {laul.pilt ? (
           <img
@@ -74,12 +90,10 @@ function Player({ laul, maabib, togglePlay, jargmine, eelmine, toggleLiked, audi
             {laul.pealkiri.slice(0, 2).toUpperCase()}
           </div>
         )}
-
         <div>
           <div className="player-song-title">{laul.pealkiri}</div>
           <div className="player-song-artist">{laul.artist}</div>
         </div>
-
         <button
           className={`player-heart ${laul.liked ? "liked" : ""}`}
           onClick={() => toggleLiked(laul.id)}
@@ -88,8 +102,26 @@ function Player({ laul, maabib, togglePlay, jargmine, eelmine, toggleLiked, audi
         </button>
       </div>
 
-      {/* Kesk — nupud + progress */}
+      {/* Kesk */}
       <div className="player-center">
+
+        {/* Popup — ilmub play nupu kohale */}
+        <div className={`song-popup ${popup ? "visible" : ""}`}>
+          {laul.pilt && (
+            <img
+              className="song-popup-img"
+              src={laul.pilt}
+              alt={laul.pealkiri}
+              onError={(e) => { e.target.style.display = "none" }}
+            />
+          )}
+          <div className="song-popup-info">
+            <div className="song-popup-now">Praegu mängib</div>
+            <div className="song-popup-title">{laul.pealkiri}</div>
+            <div className="song-popup-artist">{laul.artist}</div>
+          </div>
+        </div>
+
         <div className="player-controls">
           <button className="ctrl-btn" onClick={eelmine}>&lt;&lt;</button>
           <button className="play-pause-btn" onClick={togglePlay}>
@@ -107,15 +139,14 @@ function Player({ laul, maabib, togglePlay, jargmine, eelmine, toggleLiked, audi
         </div>
       </div>
 
-      {/* Parem — helitugevus */}
+      {/* Parem */}
       <div className="player-right">
         <div className="volume-wrap">
           <span className="volume-icon">VOL</span>
           <input
             type="range"
             className="volume-slider"
-            min="0"
-            max="100"
+            min="0" max="100"
             value={volume}
             onChange={handleVolume}
           />
