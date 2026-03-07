@@ -1,21 +1,29 @@
 import { useState, useRef, useEffect } from "react"
 import SongCard from "./SongCard"
 
-function MainContent({ laulud, praeguneId, maabib, valiLaul, toggleLiked, vaade }) {
+function MainContent({ laulud, praeguneId, maabib, valiLaul, toggleLiked, vaade, avaPlaylistModal }) {
   const [otsing, setOtsing] = useState("")
-  const otsinguRef = useRef(null) // useRef — fokuseeri otsinguriba Ctrl+F vajutamisel
+  const otsinguRef = useRef(null)
 
   const pealkiriMap = {
-    "kõik":             "Kõik laulud",
-    "lemmikud":         "Lemmikud",
-    "Edward Skeletrix": "Edward Skeletrix",
-    "Lucy Bedroque":    "Lucy Bedroque",
-    "slayr":            "slayr",
-    "2hollis":          "2hollis",
-    "prettifun":        "prettifun",
+    "kõik":               "Kõik laulud",
+    "lemmikud":           "Lemmikud",
+    "rap":                "Rap",
+    "trap":               "Trap",
+    "hyperpop":           "Hyperpop",
+    "lofi":               "Lo-fi",
+    "Edward Skeletrix":   "Edward Skeletrix",
+    "Lucy Bedroque":      "Lucy Bedroque",
+    "slayr":              "slayr",
+    "2hollis":            "2hollis",
+    "prettifun":          "prettifun",
+    "Che":                "Che",
+    "Che, xaviersobased": "Che, xaviersobased",
+    "OsamaSon":           "OsamaSon",
+    "jaydes":             "jaydes",
+    "Bladee":             "Bladee",
   }
 
-  // useEffect — Ctrl+K vajutus fokuseeri otsinguriba
   useEffect(() => {
     function handleKeyDown(e) {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
@@ -31,7 +39,6 @@ function MainContent({ laulud, praeguneId, maabib, valiLaul, toggleLiked, vaade 
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [])
 
-  // Filtreeri laulud otsingu järgi
   const nahtavad = otsing.trim() === ""
     ? laulud
     : laulud.filter(l =>
@@ -39,36 +46,42 @@ function MainContent({ laulud, praeguneId, maabib, valiLaul, toggleLiked, vaade 
         l.artist.toLowerCase().includes(otsing.toLowerCase())
       )
 
+  const sectionTitle = vaade.startsWith("playlist:")
+    ? "Playlist"
+    : pealkiriMap[vaade] ?? "Laulud"
+
   return (
     <main className="main-content">
       <div className="main-header">
         <h1>SOUNDPLAYER</h1>
-
-        {/* Search bar */}
-        <div className="search-wrap">
-          <span className="search-icon">_</span>
-          <input
-            ref={otsinguRef}
-            className="search-input"
-            type="text"
-            placeholder="Otsi laule... (Ctrl+K)"
-            value={otsing}
-            onChange={(e) => setOtsing(e.target.value)}
-          />
-          {/* Tingimuslik renderdamine — näita X nuppu ainult kui midagi kirjutatud */}
-          {otsing && (
-            <button className="search-clear" onClick={() => setOtsing("")}>
-              x
-            </button>
-          )}
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          {/* Playlist nupp */}
+          <button className="playlist-modal-btn" onClick={avaPlaylistModal}>
+            + Playlist
+          </button>
+          {/* Search */}
+          <div className="search-wrap">
+            <span className="search-icon">_</span>
+            <input
+              ref={otsinguRef}
+              className="search-input"
+              type="text"
+              placeholder="Otsi... (Ctrl+K)"
+              value={otsing}
+              onChange={e => setOtsing(e.target.value)}
+            />
+            {otsing && (
+              <button className="search-clear" onClick={() => setOtsing("")}>x</button>
+            )}
+          </div>
         </div>
       </div>
 
       <div className="main-inner">
         <div className="section-title">
           {otsing
-            ? `Otsing: "${otsing}" — ${nahtavad.length} tulemust`
-            : pealkiriMap[vaade] ?? "Laulud"
+            ? `"${otsing}" — ${nahtavad.length} tulemust`
+            : sectionTitle
           }
         </div>
 

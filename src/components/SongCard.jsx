@@ -1,5 +1,4 @@
-// SongCard — üks muusika kaart
-// onAktiivne = see laul mängib praegu
+// SongCard — kaart pildiga + genre badge
 
 function SongCard({ laul, onAktiivne, maabib, onKlõps, onLiked }) {
   return (
@@ -13,7 +12,7 @@ function SongCard({ laul, onAktiivne, maabib, onKlõps, onLiked }) {
             className="card-img"
             src={laul.pilt}
             alt={laul.pealkiri}
-            onError={(e) => { e.target.style.display = "none" }}
+            onError={e => { e.target.style.display = "none" }}
           />
         ) : (
           <div className="card-img-placeholder">
@@ -21,18 +20,18 @@ function SongCard({ laul, onAktiivne, maabib, onKlõps, onLiked }) {
           </div>
         )}
 
-        {/* Lemmiku nupp */}
+        {/* Genre badge */}
+        <div className="card-genre">{laul.žanr}</div>
+
+        {/* Lemmik nupp */}
         <button
           className={`card-liked ${laul.liked ? "liked" : ""}`}
-          onClick={(e) => {
-            e.stopPropagation()
-            onLiked()
-          }}
+          onClick={e => { e.stopPropagation(); onLiked() }}
         >
           {laul.liked ? "+" : "o"}
         </button>
 
-        {/* Play/pause nupp — tingimuslik renderdamine */}
+        {/* Play nupp */}
         <button className="card-play-btn">
           {onAktiivne && maabib ? "||" : ">"}
         </button>
