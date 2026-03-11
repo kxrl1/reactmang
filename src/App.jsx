@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect } from "react"
+import { PlayerProvider } from "./context/PlayerContext"
 import Sidebar from "./components/Sidebar"
 import MainContent from "./components/MainContent"
 import Player from "./components/Player"
@@ -28,51 +29,43 @@ const LAULUD = [
 ]
 
 function App() {
-  // Laulud — loe liked olek localStorage-ist
+  // Laulud — liked laaditakse localStorage-ist
   const [laulud, setLaulud] = useState(() => {
     try {
       const savedLiked = localStorage.getItem("sp_liked")
       if (!savedLiked) return LAULUD
       const likedIds = JSON.parse(savedLiked)
       return LAULUD.map(l => ({ ...l, liked: likedIds.includes(l.id) }))
-    } catch {
-      return LAULUD
-    }
+    } catch { return LAULUD }
   })
-  const [praeguneId, setPraeguneId] = useState(LAULUD[0].id)
-  const [maabib, setMaabib] = useState(false)
-  const [vaade, setVaade] = useState("kõik") // "kõik" | "lemmikud" | genre | artisti nimi | "playlist:id"
 
-  // Playlists — laetakse localStorage-ist
+  const [vaade, setVaade] = useState("kõik")
+
+  // Playlists localStorage-ist
   const [playlists, setPlaylists] = useState(() => {
     try {
       const saved = localStorage.getItem("sp_playlists")
       return saved ? JSON.parse(saved) : []
-    } catch {
-      return []
-    }
+    } catch { return [] }
   })
 
-  // Playlist modal olek
-  const [playlistModal, setPlaylistModal] = useState(false)   // kas "lisa playlistile" modal on lahti
-  const [valitudLaulud, setValitudLaulud] = useState([])      // kastidega valitud laulud
-  const [uusNimi, setUusNimi] = useState("")                  // uue playlisti nimi
-  const [lisaOlemasolevasse, setLisaOlemasolevasse] = useState(null) // olemasoleva playlist id
+  const [playlistModal, setPlaylistModal] = useState(false)
+  const [valitudLaulud, setValitudLaulud] = useState([])
+  const [uusNimi, setUusNimi] = useState("")
+  const [lisaOlemasolevasse, setLisaOlemasolevasse] = useState(null)
 
-  const audioRef = useRef(new Audio())
-
-  // useEffect — salvesta playlists localStorage-i iga kord kui muutub
+  // Salvesta playlists
   useEffect(() => {
     localStorage.setItem("sp_playlists", JSON.stringify(playlists))
   }, [playlists])
 
-  // useEffect — salvesta liked laulud localStorage-i
+  // Salvesta liked
   useEffect(() => {
     const likedIds = laulud.filter(l => l.liked).map(l => l.id)
     localStorage.setItem("sp_liked", JSON.stringify(likedIds))
   }, [laulud])
 
-  // Mis laulud on praegu nähtaval
+  // Nähtavad laulud vaate järgi
   const nahtavadLaulud = laulud.filter(l => {
     if (vaade === "lemmikud") return l.liked
     if (vaade === "kõik") return true
@@ -81,69 +74,14 @@ function App() {
       const pl = playlists.find(p => p.id === id)
       return pl ? pl.lauludIds.includes(l.id) : false
     }
-    // genre filter
     if (["rap","trap","hyperpop","lofi"].includes(vaade)) return l.žanr === vaade
-    // artist filter
     return l.artist === vaade
   })
-
-  const praeguneIndex = nahtavadLaulud.findIndex(l => l.id === praeguneId)
-  const praegune = laulud.find(l => l.id === praeguneId)
-
-  useEffect(() => {
-    if (!praegune) return
-    const audio = audioRef.current
-    audio.src = praegune.audioUrl
-    audio.load()
-    if (maabib) audio.play().catch(() => {})
-  }, [praeguneId])
-
-  useEffect(() => {
-    const audio = audioRef.current
-    if (maabib) audio.play().catch(() => {})
-    else audio.pause()
-  }, [maabib])
-
-  useEffect(() => {
-    const audio = audioRef.current
-    function handleEnded() {
-      const next = (praeguneIndex + 1) % nahtavadLaulud.length
-      setPraeguneId(nahtavadLaulud[next].id)
-      setMaabib(true)
-    }
-    audio.addEventListener("ended", handleEnded)
-    return () => audio.removeEventListener("ended", handleEnded)
-  }, [praeguneIndex, nahtavadLaulud])
-
-  useEffect(() => {
-    if (praegune) document.title = `${praegune.pealkiri} — ${praegune.artist}`
-  }, [praegune])
-
-  function valiLaul(id) {
-    if (id === praeguneId) setMaabib(p => !p)
-    else { setPraeguneId(id); setMaabib(true) }
-  }
-
-  function togglePlay() { setMaabib(p => !p) }
-
-  function jargmine() {
-    if (!nahtavadLaulud.length) return
-    setPraeguneId(nahtavadLaulud[(praeguneIndex + 1) % nahtavadLaulud.length].id)
-    setMaabib(true)
-  }
-
-  function eelmine() {
-    if (!nahtavadLaulud.length) return
-    if (audioRef.current.currentTime > 3) { audioRef.current.currentTime = 0 }
-    else setPraeguneId(nahtavadLaulud[(praeguneIndex - 1 + nahtavadLaulud.length) % nahtavadLaulud.length].id)
-    setMaabib(true)
-  }
 
   function toggleLiked(id) {
     setLaulud(p => p.map(l => l.id === id ? { ...l, liked: !l.liked } : l))
   }
 
-  // Ava playlist modal — näitab kõiki laule kastidega
   function avaPlaylistModal() {
     setValitudLaulud([])
     setUusNimi("")
@@ -151,24 +89,16 @@ function App() {
     setPlaylistModal(true)
   }
 
-  // Kasti toggle
   function toggleValitud(id) {
     setValitudLaulud(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
   }
 
-  // Loo uus playlist
   function looPlaylist() {
     if (!uusNimi.trim() || valitudLaulud.length === 0) return
-    const uus = {
-      id: Date.now().toString(),
-      nimi: uusNimi.trim(),
-      lauludIds: valitudLaulud,
-    }
-    setPlaylists(p => [...p, uus])
+    setPlaylists(p => [...p, { id: Date.now().toString(), nimi: uusNimi.trim(), lauludIds: valitudLaulud }])
     setPlaylistModal(false)
   }
 
-  // Lisa olemasolevasse playlistisse
   function lisaPlaylistisse() {
     if (!lisaOlemasolevasse || valitudLaulud.length === 0) return
     setPlaylists(p => p.map(pl =>
@@ -179,107 +109,85 @@ function App() {
     setPlaylistModal(false)
   }
 
-  // Kustuta playlist
   function kustutaPlaylist(id) {
     setPlaylists(p => p.filter(pl => pl.id !== id))
     if (vaade === `playlist:${id}`) setVaade("kõik")
   }
 
   return (
-    <div className="app">
-      <Sidebar
-        vaade={vaade}
-        setVaade={setVaade}
-        laulud={laulud}
-        playlists={playlists}
-        kustutaPlaylist={kustutaPlaylist}
-      />
+    // PlayerProvider annab PlayerContext kõigile lastele
+    // useReducer on sees PlayerContext.jsx-is
+    <PlayerProvider laulud={laulud} nahtavadLaulud={nahtavadLaulud}>
+      <div className="app">
+        <Sidebar
+          vaade={vaade}
+          setVaade={setVaade}
+          laulud={laulud}
+          playlists={playlists}
+          kustutaPlaylist={kustutaPlaylist}
+        />
 
-      <MainContent
-        laulud={nahtavadLaulud}
-        allLaulud={laulud}
-        praeguneId={praeguneId}
-        maabib={maabib}
-        valiLaul={valiLaul}
-        toggleLiked={toggleLiked}
-        vaade={vaade}
-        avaPlaylistModal={avaPlaylistModal}
-      />
+        <MainContent
+          laulud={nahtavadLaulud}
+          vaade={vaade}
+          toggleLiked={toggleLiked}
+          avaPlaylistModal={avaPlaylistModal}
+        />
 
-      <Player
-        laul={praegune}
-        maabib={maabib}
-        togglePlay={togglePlay}
-        jargmine={jargmine}
-        eelmine={eelmine}
-        toggleLiked={toggleLiked}
-        audioRef={audioRef}
-      />
+        <Player toggleLiked={toggleLiked} />
 
-      {/* Playlist modal */}
-      {playlistModal && (
-        <div className="modal-overlay" onClick={() => setPlaylistModal(false)}>
-          <div className="modal pl-modal" onClick={e => e.stopPropagation()}>
-            <h2>Lisa playlistile</h2>
-
-            {/* Vali laulud kastidega */}
-            <div className="pl-song-list">
-              {laulud.map(l => (
-                <div
-                  key={l.id}
-                  className={`pl-song-row ${valitudLaulud.includes(l.id) ? "selected" : ""}`}
-                  onClick={() => toggleValitud(l.id)}
-                >
-                  <div className="pl-checkbox">
-                    {valitudLaulud.includes(l.id) ? "X" : ""}
-                  </div>
-                  {l.pilt && <img src={l.pilt} alt="" className="pl-song-img" onError={e => e.target.style.display="none"} />}
-                  <div>
-                    <div className="pl-song-title">{l.pealkiri}</div>
-                    <div className="pl-song-artist">{l.artist}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="pl-valitud-arv">{valitudLaulud.length} laulu valitud</div>
-
-            {/* Loo uus playlist */}
-            <div className="pl-section-title">Loo uus playlist</div>
-            <input
-              className="pl-input"
-              type="text"
-              placeholder="Playlisti nimi"
-              value={uusNimi}
-              onChange={e => setUusNimi(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && looPlaylist()}
-            />
-            <button className="pl-btn-primary" onClick={looPlaylist}>Loo playlist</button>
-
-            {/* Lisa olemasolevasse */}
-            {playlists.length > 0 && (
-              <>
-                <div className="pl-section-title" style={{ marginTop: 16 }}>Lisa olemasolevasse</div>
-                <div className="pl-existing">
-                  {playlists.map(pl => (
-                    <div
-                      key={pl.id}
-                      className={`pl-existing-item ${lisaOlemasolevasse === pl.id ? "selected" : ""}`}
-                      onClick={() => setLisaOlemasolevasse(pl.id)}
-                    >
-                      {pl.nimi} ({pl.lauludIds.length})
+        {/* Playlist modal */}
+        {playlistModal && (
+          <div className="modal-overlay" onClick={() => setPlaylistModal(false)}>
+            <div className="modal pl-modal" onClick={e => e.stopPropagation()}>
+              <h2>Lisa playlistile</h2>
+              <div className="pl-song-list">
+                {laulud.map(l => (
+                  <div
+                    key={l.id}
+                    className={`pl-song-row ${valitudLaulud.includes(l.id) ? "selected" : ""}`}
+                    onClick={() => toggleValitud(l.id)}
+                  >
+                    <div className="pl-checkbox">{valitudLaulud.includes(l.id) ? "X" : ""}</div>
+                    {l.pilt && <img src={l.pilt} alt="" className="pl-song-img" onError={e => e.target.style.display="none"} />}
+                    <div>
+                      <div className="pl-song-title">{l.pealkiri}</div>
+                      <div className="pl-song-artist">{l.artist}</div>
                     </div>
-                  ))}
-                </div>
-                <button className="pl-btn-secondary" onClick={lisaPlaylistisse}>Lisa valitusse</button>
-              </>
-            )}
-
-            <button className="pl-btn-cancel" onClick={() => setPlaylistModal(false)}>Sulge</button>
+                  </div>
+                ))}
+              </div>
+              <div className="pl-valitud-arv">{valitudLaulud.length} laulu valitud</div>
+              <div className="pl-section-title">Loo uus playlist</div>
+              <input
+                className="pl-input" type="text" placeholder="Playlisti nimi"
+                value={uusNimi} onChange={e => setUusNimi(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && looPlaylist()}
+              />
+              <button className="pl-btn-primary" onClick={looPlaylist}>Loo playlist</button>
+              {playlists.length > 0 && (
+                <>
+                  <div className="pl-section-title" style={{ marginTop: 16 }}>Lisa olemasolevasse</div>
+                  <div className="pl-existing">
+                    {playlists.map(pl => (
+                      <div
+                        key={pl.id}
+                        className={`pl-existing-item ${lisaOlemasolevasse === pl.id ? "selected" : ""}`}
+                        onClick={() => setLisaOlemasolevasse(pl.id)}
+                      >
+                        {pl.nimi} ({pl.lauludIds.length})
+                      </div>
+                    ))}
+                  </div>
+                  <button className="pl-btn-secondary" onClick={lisaPlaylistisse}>Lisa valitusse</button>
+                </>
+              )}
+              <button className="pl-btn-cancel" onClick={() => setPlaylistModal(false)}>Sulge</button>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </PlayerProvider>
   )
 }
 

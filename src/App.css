@@ -1039,3 +1039,28 @@ body {
 }
 
 .pl-delete-btn:hover { color: var(--red); }
+
+
+/* ══ MUSICBRAINZ ALBUMI INFO ══ */
+.player-album-info {
+  font-size: 0.78rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  margin-top: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.player-album-info.loading {
+  opacity: 0.4;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.15; }
+}
+
+.album-sep { opacity: 0.4; }

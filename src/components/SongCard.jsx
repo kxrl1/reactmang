@@ -1,29 +1,29 @@
-// SongCard — kaart pildiga + genre badge
+import { usePlayer } from "../context/PlayerContext"
 
-function SongCard({ laul, onAktiivne, maabib, onKlõps, onLiked }) {
+// SongCard loeb player oleku usePlayer() hookist (useContext)
+// praeguneId ja maabib ei tule enam propsina
+
+function SongCard({ laul, onLiked }) {
+  const { praeguneId, maabib, valiLaul } = usePlayer()
+  const onAktiivne = laul.id === praeguneId
+
   return (
     <div
       className={`music-card ${onAktiivne ? "aktiivne" : ""}`}
-      onClick={onKlõps}
+      onClick={() => valiLaul(laul.id)}
     >
       <div className="card-img-wrap">
         {laul.pilt ? (
-          <img
-            className="card-img"
-            src={laul.pilt}
-            alt={laul.pealkiri}
-            onError={e => { e.target.style.display = "none" }}
-          />
+          <img className="card-img" src={laul.pilt} alt={laul.pealkiri}
+            onError={e => { e.target.style.display = "none" }} />
         ) : (
           <div className="card-img-placeholder">
             {laul.pealkiri.slice(0, 2).toUpperCase()}
           </div>
         )}
 
-        {/* Genre badge */}
         <div className="card-genre">{laul.žanr}</div>
 
-        {/* Lemmik nupp */}
         <button
           className={`card-liked ${laul.liked ? "liked" : ""}`}
           onClick={e => { e.stopPropagation(); onLiked() }}
@@ -31,7 +31,6 @@ function SongCard({ laul, onAktiivne, maabib, onKlõps, onLiked }) {
           {laul.liked ? "+" : "o"}
         </button>
 
-        {/* Play nupp */}
         <button className="card-play-btn">
           {onAktiivne && maabib ? "||" : ">"}
         </button>

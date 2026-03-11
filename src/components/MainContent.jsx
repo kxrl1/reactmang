@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import SongCard from "./SongCard"
 
-function MainContent({ laulud, praeguneId, maabib, valiLaul, toggleLiked, vaade, avaPlaylistModal }) {
+function MainContent({ laulud, vaade, toggleLiked, avaPlaylistModal }) {
   const [otsing, setOtsing] = useState("")
   const otsinguRef = useRef(null)
 
@@ -24,6 +24,7 @@ function MainContent({ laulud, praeguneId, maabib, valiLaul, toggleLiked, vaade,
     "Bladee":             "Bladee",
   }
 
+  // useEffect — Ctrl+K fookus otsingule
   useEffect(() => {
     function handleKeyDown(e) {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
@@ -55,11 +56,9 @@ function MainContent({ laulud, praeguneId, maabib, valiLaul, toggleLiked, vaade,
       <div className="main-header">
         <h1>SOUNDPLAYER</h1>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          {/* Playlist nupp */}
           <button className="playlist-modal-btn" onClick={avaPlaylistModal}>
             + Playlist
           </button>
-          {/* Search */}
           <div className="search-wrap">
             <span className="search-icon">_</span>
             <input
@@ -79,10 +78,7 @@ function MainContent({ laulud, praeguneId, maabib, valiLaul, toggleLiked, vaade,
 
       <div className="main-inner">
         <div className="section-title">
-          {otsing
-            ? `"${otsing}" — ${nahtavad.length} tulemust`
-            : sectionTitle
-          }
+          {otsing ? `"${otsing}" — ${nahtavad.length} tulemust` : sectionTitle}
         </div>
 
         {nahtavad.length === 0 ? (
@@ -93,9 +89,6 @@ function MainContent({ laulud, praeguneId, maabib, valiLaul, toggleLiked, vaade,
               <SongCard
                 key={laul.id}
                 laul={laul}
-                onAktiivne={laul.id === praeguneId}
-                maabib={maabib}
-                onKlõps={() => valiLaul(laul.id)}
                 onLiked={() => toggleLiked(laul.id)}
               />
             ))}
